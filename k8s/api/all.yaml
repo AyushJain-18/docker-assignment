@@ -1,0 +1,186 @@
+# api-configmap.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  clusterIP: None
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+
+#  api-deployement.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: node-api
+  template:
+    metadata:
+      labels:
+        app: node-api
+    spec:
+      containers:
+        - name: node-api
+          image: jainayush18/docker-assignment:1.0.0
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: "0.5" 
+              memory: "512Mi"
+            requests:
+              cpu: "0.25"
+              memory: "256Mi"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: MONGO_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: MONGO_HOST
+            - name: MONGO_INITDB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: MONGO_INITDB_DATABASE
+
+# api-hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: node-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: node-api
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+
+#api-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secret
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: cm9vdA==
+  MONGO_INITDB_ROOT_PASSWORD: cGFzc3dvcmQ= 
+
+#api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: node-api
+  ports:
+    - port: 80
+      targetPort: 3000
+
+
+#mongo-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config
+data:
+  MONGO_INITDB_DATABASE: mydatabase
+
+#mongo-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secret
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: QXl1c2g=
+  MONGO_INITDB_ROOT_PASSWORD: SmFpbg==
+
+#mongo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  clusterIP: None
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+
+#mpngo-statefulset.yaml
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: 'mongo'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mongo-config
+                  key: MONGO_INITDB_DATABASE
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-storage
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests:
+            storage: 1Gi
