@@ -1,5 +1,6 @@
 Code repository :- https://github.com/AyushJain-18/docker-assignment
 Docker image url :- https://hub.docker.com/r/jainayush18/docker-assignment
+<<<<<<< HEAD
 Servive api url :- used minikube and hence have only local url, which can be generate using command minikube service node-api-service
 screen recording :-
 
@@ -104,3 +105,7 @@ Assignment point 2: Deploy an API service with 3 pods using ReplicaSets, accessi
 # kubectl get pods
 
 # kubectl get hpa
+=======
+Zip file link :- https://drive.google.com/file/d/1FCMRIDbpxBydpTInxVL0nAgChmKbHzrD/view
+screen recording :- https://drive.google.com/file/d/11fgNlE50lBOulyAIG_207DoC7vIrTtng/view
+>>>>>>> 7b445d8263c74a65b12cd93d03146093ca012a23

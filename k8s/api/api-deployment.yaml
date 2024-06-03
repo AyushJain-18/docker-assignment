@@ -14,16 +14,16 @@ spec:
     spec:
       containers:
         - name: node-api
-          image: jainayush18/docker-assignment:2.0.0
+          image: jainayush18/docker-assignment:3.0.0
           ports:
             - containerPort: 3000
           resources:
             limits:
-              cpu: "0.5" 
-              memory: "512Mi"
-            requests:
-              cpu: "0.25"
+              cpu: "0.25" 
               memory: "256Mi"
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
